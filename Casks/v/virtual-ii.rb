@@ -2,7 +2,8 @@ cask "virtual-ii" do
   version "13.2"
   sha256 :no_check
 
-  url "https://virtualii.com/VirtualII.dmg"
+  url "https://virtualii.com/VirtualII.dmg",
+      user_agent: :browser
   name "Virtual ]["
   desc "Apple II Emulator"
   homepage "https://virtualii.com/"
