@@ -1,6 +1,9 @@
 name: Debug Virtual-II connectivity
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/debug-virtual-ii-connectivity.yml
   workflow_dispatch:
     inputs:
       url:
