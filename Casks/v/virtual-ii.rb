@@ -3,7 +3,7 @@ cask "virtual-ii" do
   sha256 :no_check
 
   url "https://virtualii.com/VirtualII.dmg",
-      user_agent: :browser
+      user_agent: :fork
   name "Virtual ]["
   desc "Apple II Emulator"
   homepage "https://virtualii.com/"
