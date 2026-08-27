@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     env:
-      TEST_URL: ${{ inputs.url }}
+      TEST_URL: ${{ inputs.url || 'https://virtualii.com/VirtualII.dmg' }}
       TEST_HOST: virtualii.com
     steps:
       - name: Runner and public IP
