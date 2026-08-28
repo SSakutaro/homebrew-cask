@@ -20,6 +20,8 @@ cask "amadeus-pro" do
 
   app "Amadeus Pro 3.app"
 
+  uninstall quit: "com.HairerSoft.AmadeusPro3"
+
   zap trash: [
     "~/Library/Application Support/Amadeus Pro",
     "~/Library/Caches/com.HairerSoft.AmadeusPro",
