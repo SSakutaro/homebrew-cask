@@ -1,9 +1,8 @@
 cask "amadeus-pro" do
-  version "2.8.14"
+  version "3.0.2"
   sha256 :no_check
 
-  url "https://s3.amazonaws.com/AmadeusPro#{version.major}/AmadeusPro.zip",
-      verified: "s3.amazonaws.com/AmadeusPro2/"
+  url "https://s3.amazonaws.com/HairerSoftPublic/AmadeusPro3/AmadeusPro.zip"
   name "Amadeus Pro"
   desc "Multi-purpose audio recorder, editor and converter"
   homepage "https://www.hairersoft.com/pro.html"
@@ -12,14 +11,14 @@ cask "amadeus-pro" do
   # so we have to skip it in those instances for now.
   livecheck do
     url :homepage
-    regex(/Download\s*Amadeus\s*Pro\s*v?(\d+(?:\.\d+)+)/i)
+    regex(/<h2>Download\s*Amadeus.*?Pro.*?(\d+(?:\.\d+)+)/i)
   end
 
   no_autobump! because: "Livecheck is unreachable in autobump environment"
 
-  depends_on :macos
+  depends_on macos: :ventura
 
-  app "Amadeus Pro.app"
+  app "Amadeus Pro 3.app"
 
   zap trash: [
     "~/Library/Application Support/Amadeus Pro",
@@ -28,8 +27,4 @@ cask "amadeus-pro" do
     "~/Library/Preferences/com.HairerSoft.AmadeusPro.plist",
     "~/Library/Saved Application State/com.HairerSoft.AmadeusPro.savedState",
   ]
-
-  caveats do
-    requires_rosetta
-  end
 end
