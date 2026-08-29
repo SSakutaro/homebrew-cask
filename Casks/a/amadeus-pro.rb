@@ -2,7 +2,7 @@ cask "amadeus-pro" do
   version "3.0.2"
   sha256 :no_check
 
-  url "https://s3.amazonaws.com/HairerSoftPublic/AmadeusPro3/AmadeusPro.zip"
+  url "https://s3.amazonaws.com/HairerSoftPublic/AmadeusPro#{version.major}/AmadeusPro.zip"
   name "Amadeus Pro"
   desc "Multi-purpose audio recorder, editor and converter"
   homepage "https://www.hairersoft.com/pro.html"
@@ -10,17 +10,19 @@ cask "amadeus-pro" do
   # The homepage is inaccessible from CI and autobump environments,
   # so we have to skip it in those instances for now.
   livecheck do
-    url :homepage
-    regex(/<h2>Download\s*Amadeus.*?Pro.*?(\d+(?:\.\d+)+)/i)
+    url "https://s3.amazonaws.com/HairerSoftPublic/AmadeusPro#{version.major}/AmadeusPro#{version.major}.plist"
+    strategy :xml do |xml|
+      short_version = xml.elements["//key[text()='productVersion']"]&.next_element&.text
+      next if short_version.blank?
+      short_version.strip
+    end
   end
-
-  no_autobump! because: "Livecheck is unreachable in autobump environment"
 
   depends_on macos: :ventura
 
-  app "Amadeus Pro 3.app"
+  app "Amadeus Pro #{version.major}.app"
 
-  uninstall quit: "com.HairerSoft.AmadeusPro3"
+  uninstall quit: "com.HairerSoft.AmadeusPro#{version.major}"
 
   zap trash: [
     "~/Library/Application Support/Amadeus Pro",
