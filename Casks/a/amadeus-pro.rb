@@ -10,7 +10,7 @@ cask "amadeus-pro" do
   # The homepage is inaccessible from CI and autobump environments,
   # so we have to skip it in those instances for now.
   livecheck do
-    url "https://s3.amazonaws.com/HairerSoftPublic/AmadeusPro#{version.major}/AmadeusPro#{version.major}.plist"
+    url "https://s3.amazonaws.com/HairerSoftPublic/AmadeusPro3/AmadeusPro3.plist"
     strategy :xml do |xml|
       short_version = xml.elements["//key[text()='productVersion']"]&.next_element&.text
       next if short_version.blank?
