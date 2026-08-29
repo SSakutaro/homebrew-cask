@@ -14,6 +14,7 @@ cask "amadeus-pro" do
     strategy :xml do |xml|
       short_version = xml.elements["//key[text()='productVersion']"]&.next_element&.text
       next if short_version.blank?
+
       short_version.strip
     end
   end
