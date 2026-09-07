@@ -7,6 +7,7 @@ cask "elecom-mouse-util" do
   desc "Software to more effectively use an ELECOM mouse"
   homepage "https://www.elecom.co.jp/global/download-list/utility/mouse_assistant/mac/"
 
+  # livecheck test in CI Environment
   livecheck do
     url :homepage
     regex(/ELECOM[._-]MA[._-]Setup[._-]v?(\d+(?:\.\d+)+)\.zip/i)
