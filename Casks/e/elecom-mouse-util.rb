@@ -9,7 +9,7 @@ cask "elecom-mouse-util" do
 
   # livecheck test in CI Environment
   livecheck do
-    url :homepage
+    url :homepage, user_agent: :browser
     regex(/ELECOM[._-]MA[._-]Setup[._-]v?(\d+(?:\.\d+)+)\.zip/i)
   end
 
