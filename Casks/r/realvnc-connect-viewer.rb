@@ -18,6 +18,8 @@ cask "realvnc-connect-viewer" do
 
   pkg "RealVNC-Connect-Viewer-#{version}-MacOSX-universal.pkg"
 
+  uninstall pkgutil: "com.realvnc.rvncconnect.viewer.1"
+
   zap trash: [
     "~/Library/Preferences/com.realvnc.vncviewer.plist",
     "~/Library/Saved Application State/com.realvnc.vncviewer.savedState",
