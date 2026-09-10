@@ -1,8 +1,8 @@
 cask "foxitreader" do
-  version "2026.1"
-  sha256 "002c404067c558ab476cdf9e7b3194382f3434f9802273b6cf41b394bcec0404"
+  version "2026.2.0"
+  sha256 "9f90e263bc45255dbe7fdfa4fdbbf92d692e95a5a263bbd9c16c0f6e212e08ef"
 
-  url "https://cdn01.foxitsoftware.com/pub/foxit/phantomPDF/desktop/mac/#{version.major}.x/#{version.major_minor}/FoxitPDFReader#{version.major_minor.no_dots}.L10N.Setup.pkg"
+  url "https://cdn01.foxitsoftware.com/pub/foxit/reader/desktop/mac/#{version}/FoxitPDFReader#{version.major_minor.no_dots}.L10N.Setup.pkg"
   name "Foxit Reader"
   desc "PDF reader"
   homepage "https://www.foxit.com/pdf-reader/"
@@ -10,7 +10,8 @@ cask "foxitreader" do
   livecheck do
     url "https://www.foxit.com/portal/download/getdownloadform.html?formId=download-reader&retJson=1&platform=Mac-OS-X"
     strategy :json do |json|
-      json.dig("package_info", "big_version")&.delete_suffix(".x")
+      big_version = json.dig("package_info", "big_version")
+      big_version && "#{big_version.delete_suffix(".x")}.0"
     end
   end
 
