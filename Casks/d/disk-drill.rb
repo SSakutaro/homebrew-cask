@@ -1,5 +1,5 @@
 cask "disk-drill" do
-  version "6.2.2219"
+  version "6.3.2326"
   sha256 :no_check
 
   url "https://dl.cleverfiles.com/diskdrill.dmg"
@@ -11,6 +11,8 @@ cask "disk-drill" do
     url "https://www.cleverfiles.com/releases/auto-update/dd-newestr.xml"
     strategy :sparkle
   end
+
+  no_autobump! because: "Livecheck is unreachable in autobump environment"
 
   auto_updates true
   depends_on :macos
