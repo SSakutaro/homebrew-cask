@@ -1,9 +1,7 @@
-# Standalone tooling is not part of Homebrew's Sorbet typechecking.
-# rubocop:disable Sorbet/StrictSigil, Sorbet/TrueSigil
 # typed: false
 # frozen_string_literal: true
 
-require_relative "../bin/prepare_zap_pr"
+require_relative "prepare"
 
 repository = ENV.fetch("GITHUB_REPOSITORY")
 raise "This test only runs in the fork" if repository != "SSakutaro/homebrew-cask"
@@ -70,5 +68,3 @@ else
     File.open(summary, "a") { |file| file.puts "- PASS: rerun found an existing proposal; no new PR needed." }
   end
 end
-
-# rubocop:enable Sorbet/StrictSigil, Sorbet/TrueSigil

@@ -5,8 +5,8 @@ on:
     paths:
       - .github/workflows/zap-pr.yml
       - .github/zap-pr-exclusions.json
-      - developer/bin/prepare_zap_pr.rb
-      - developer/test/prepare_zap_pr_test.rb
+      - .github/actions/zap-pr/prepare.rb
+      - .github/actions/zap-pr/prepare_test.rb
   # Only the trusted default-branch workflow and scripts run, after a bot bump is merged.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [closed]
@@ -28,7 +28,7 @@ jobs:
           setup-homebrew: true
           portable-ruby: true
 
-      - run: ruby developer/test/prepare_zap_pr_test.rb
+      - run: ruby .github/actions/zap-pr/prepare_test.rb
 
   zap-pr:
     if: >
@@ -70,7 +70,7 @@ jobs:
 
       - name: Prepare zap proposal from CI annotations
         id: prepare
-        run: ruby developer/bin/prepare_zap_pr.rb
+        run: ruby .github/actions/zap-pr/prepare.rb
         env:
           GH_TOKEN: ${{ github.token }}
 

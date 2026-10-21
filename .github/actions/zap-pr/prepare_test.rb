@@ -1,5 +1,3 @@
-# Standalone tooling is not part of Homebrew's Sorbet typechecking.
-# rubocop:disable Sorbet/StrictSigil, Sorbet/TrueSigil
 # typed: false
 # frozen_string_literal: true
 
@@ -8,7 +6,7 @@
 
 require "tmpdir"
 require "fileutils"
-require_relative "../bin/prepare_zap_pr"
+require_relative "prepare"
 
 # No test gems are needed by the workflow or local contributors.
 module ZapPRTest
@@ -181,7 +179,7 @@ module ZapPRTest
   end
 
   def self.test_exclusions
-    ZapPR.exclusions(File.expand_path("../../.github/zap-pr-exclusions.json", __dir__))
+    ZapPR.exclusions(File.expand_path("../../zap-pr-exclusions.json", __dir__))
     with_fixture do |event, _responses, directory|
       File.write(".github/zap-pr-exclusions.json", JSON.generate("example" => "Shared files are intentional"))
       assert ZapPR.prepare(event, repository: "Homebrew/homebrew-cask", directory:).nil?
@@ -235,4 +233,4 @@ end
 
 ZapPRTest.run
 
-# rubocop:enable Sorbet/StrictSigil, Sorbet/TrueSigil, Homebrew/NegateInclude
+# rubocop:enable Homebrew/NegateInclude

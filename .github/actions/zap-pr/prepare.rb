@@ -1,5 +1,3 @@
-# Standalone tooling is not part of Homebrew's Sorbet typechecking.
-# rubocop:disable Sorbet/StrictSigil, Sorbet/TrueSigil
 # typed: false
 # frozen_string_literal: true
 
@@ -254,7 +252,7 @@ module ZapPR
   end
 end
 
-# rubocop:enable Sorbet/StrictSigil, Sorbet/TrueSigil, Homebrew/NegateInclude
+# rubocop:enable Homebrew/NegateInclude
 
 if $PROGRAM_NAME == __FILE__
   event = JSON.parse(File.read(ENV.fetch("GITHUB_EVENT_PATH")))

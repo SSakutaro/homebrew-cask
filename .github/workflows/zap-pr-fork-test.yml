@@ -40,14 +40,14 @@ jobs:
           portable-ruby: true
 
       - name: Run regression tests
-        run: ruby developer/test/prepare_zap_pr_test.rb
+        run: ruby .github/actions/zap-pr/prepare_test.rb
 
       - name: Wait for actual cask CI
         run: gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 20
 
       - name: Test exclusions and prepare real CI proposal
         id: prepare
-        run: ruby developer/test/fork_zap_pr.rb
+        run: ruby .github/actions/zap-pr/fork_test.rb
 
       - name: Check cask style
         if: steps.prepare.outputs.changes == 'true'
@@ -85,4 +85,4 @@ jobs:
             | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Verify duplicate suppression against real PR
-        run: ruby developer/test/fork_zap_pr.rb duplicate
+        run: ruby .github/actions/zap-pr/fork_test.rb duplicate

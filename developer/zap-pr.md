@@ -38,5 +38,5 @@ The file starts empty; adding an exclusion requires the usual repository review.
 Run the dependency-free tests with Ruby 3.3 or later (with bundled Prism):
 
 ```sh
-ruby developer/test/prepare_zap_pr_test.rb
+ruby .github/actions/zap-pr/prepare_test.rb
 ```
