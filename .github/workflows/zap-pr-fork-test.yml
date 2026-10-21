@@ -1,0 +1,88 @@
+name: Test zap proposals in fork
+
+on:
+  push:
+    branches: [ci-auto-zap-pr-test]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    if: github.repository == 'SSakutaro/homebrew-cask'
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      checks: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      SOURCE_RUN_ID: '39594802572'
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          core: false
+          cask: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: Homebrew/actions/setup-ruby@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          portable-ruby: true
+
+      - name: Run regression tests
+        run: ruby developer/test/prepare_zap_pr_test.rb
+
+      - name: Wait for actual cask CI
+        run: gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 20
+
+      - name: Test exclusions and prepare real CI proposal
+        id: prepare
+        run: ruby developer/test/fork_zap_pr.rb
+
+      - name: Check cask style
+        if: steps.prepare.outputs.changes == 'true'
+        env:
+          CASK_PATH: ${{ steps.prepare.outputs.cask-path }}
+        run: brew style --fix "$CASK_PATH"
+
+      - name: Commit test proposal
+        if: steps.prepare.outputs.changes == 'true'
+        env:
+          BRANCH: ${{ steps.prepare.outputs.branch }}
+          CASK_PATH: ${{ steps.prepare.outputs.cask-path }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch --create "$BRANCH"
+          git add -- "$CASK_PATH"
+          git -c commit.gpgsign=false commit --message 'elephicon: update zap stanza'
+
+      - name: Push test proposal to fork
+        if: steps.prepare.outputs.changes == 'true'
+        uses: Homebrew/actions/git-try-push@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          token: ${{ github.token }}
+          branch: ${{ steps.prepare.outputs.branch }}
+
+      - name: Create draft test PR in fork
+        if: steps.prepare.outputs.changes == 'true'
+        env:
+          BRANCH: ${{ steps.prepare.outputs.branch }}
+          PR_BODY_FILE: ${{ steps.prepare.outputs.body-file }}
+        run: |
+          gh pr create --repo "$GITHUB_REPOSITORY" --base "$GITHUB_REF_NAME" --head "$BRANCH" \
+            --draft --title 'elephicon: update zap stanza (fork test)' --body-file "$PR_BODY_FILE" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify duplicate suppression against real PR
+        run: ruby developer/test/fork_zap_pr.rb duplicate
