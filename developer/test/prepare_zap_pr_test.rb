@@ -164,6 +164,22 @@ module ZapPRTest
     end
   end
 
+  def self.test_fork_repository
+    with_fixture do |_event, _responses, directory|
+      requested = []
+      ZapPR.define_singleton_method(:api) do |endpoint|
+        requested << endpoint
+        [[]]
+      end
+      result = ZapPR.proposal(path: FILE, reports: [ANNOTATION], repository: "SSakutaro/homebrew-cask",
+                              directory:, run_id: 456, source: "for a fork-only test")
+      assert result["changes"] == "true"
+      assert requested.all? { |endpoint| endpoint.start_with?("repos/SSakutaro/homebrew-cask/") }
+      assert requested.any? { |endpoint| endpoint.include?("head=SSakutaro%3Aauto-zap-example-") }
+      assert File.read(result["body-file"]).include?("for a fork-only test")
+    end
+  end
+
   def self.test_exclusions
     ZapPR.exclusions(File.expand_path("../../.github/zap-pr-exclusions.json", __dir__))
     with_fixture do |event, _responses, directory|

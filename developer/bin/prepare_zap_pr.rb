@@ -155,6 +155,14 @@ module ZapPR
     config
   end
 
+  def self.excluded?(token)
+    reason = exclusions(".github/zap-pr-exclusions.json")[token]
+    return false unless reason
+
+    puts "Skipping #{token}: #{reason}"
+    true
+  end
+
   def self.prepare(event, repository:, directory:)
     pr = event.fetch("pull_request")
     return if event["action"] != "closed" || !pr["merged"] || pr.dig("user", "login") != "BrewTestBot"
@@ -175,11 +183,7 @@ module ZapPR
     return unless token.match?(TOKEN)
     return if path != "Casks/#{token[0]}/#{token}.rb"
 
-    reason = exclusions(".github/zap-pr-exclusions.json")[token]
-    if reason
-      puts "Skipping #{token}: #{reason}"
-      return
-    end
+    return if excluded?(token)
 
     sha = pr.dig("head", "sha")
     runs = api("repos/#{repository}/actions/workflows/ci.yml/runs?head_sha=#{sha}&event=pull_request&per_page=100")
@@ -190,25 +194,43 @@ module ZapPR
     return if run["conclusion"] != "success" || run["head_sha"] != sha
     return if run["event"] != "pull_request" || run.dig("head_repository", "full_name") != repository
 
-    run_endpoint = "repos/#{repository}/actions/runs/#{run.fetch("id")}/attempts/#{run.fetch("run_attempt")}"
+    reports = annotations(repository:, run_id: run.fetch("id"), attempt: run.fetch("run_attempt"))
+    proposal(path:, reports:, repository:, directory:, run_id: run.fetch("id"),
+             source: "for the merged bump PR ##{pr.fetch("number")}")
+  end
+
+  def self.annotations(repository:, run_id:, attempt:)
+    run_endpoint = "repos/#{repository}/actions/runs/#{run_id}/attempts/#{attempt}"
     jobs = api("#{run_endpoint}/jobs?per_page=100")
            .flat_map { |page| page.fetch("jobs") }
-    annotations = jobs.select { |job| job["conclusion"] == "success" }.flat_map do |job|
+    jobs.select { |job| job["conclusion"] == "success" }.flat_map do |job|
       check = job.fetch("check_run_url").delete_prefix("https://api.github.com/")
       raise "Unexpected check URL" unless check.match?(%r{\Arepos/#{Regexp.escape(repository)}/check-runs/\d+\z})
 
       api("#{check}/annotations?per_page=100").flatten
     end
-    paths = missing_paths(annotations, token, path)
+  end
+
+  def self.proposal(path:, reports:, repository:, directory:, run_id:, source:)
+    token = File.basename(path, ".rb")
+    return unless token.match?(TOKEN)
+    return if path != "Casks/#{token[0]}/#{token}.rb"
+    return if excluded?(token)
+
+    paths = missing_paths(reports, token, path)
     result = update(File.read(path), token, paths)
     return unless result
 
     content, additions = result
     branch = "auto-zap-#{token}-#{Digest::SHA256.hexdigest(additions.sort.join("\n"))[0, 12]}"
     # A rejected/closed proposal with the same paths must not be opened repeatedly.
-    head = URI.encode_www_form_component("Homebrew:#{branch}")
+    owner = repository.split("/").first
+    head = URI.encode_www_form_component("#{owner}:#{branch}")
     previous = api("repos/#{repository}/pulls?state=all&head=#{head}&per_page=100").flatten
-    return unless previous.empty?
+    unless previous.empty?
+      puts "Skipping #{token}: a proposal for these paths already exists (open or closed)."
+      return
+    end
 
     open_prs = api("repos/#{repository}/pulls?state=open&per_page=100").flatten
     return if open_prs.any? do |item|
@@ -218,8 +240,8 @@ module ZapPR
     File.write(path, content)
     body_file = File.join(directory, "zap-pr-body.md")
     File.write(body_file, <<~MARKDOWN)
-      Add paths reported by [CI](https://github.com/#{repository}/actions/runs/#{run.fetch("id")})
-      for the merged bump PR ##{pr.fetch("number")}.
+      Add paths reported by [CI](https://github.com/#{repository}/actions/runs/#{run_id})
+      #{source}.
 
       #{additions.map { |item| "- `#{item}`" }.join("\n")}
 
