@@ -1,0 +1,121 @@
+name: Create zap pull requests
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/zap-pr.yml
+      - .github/zap-pr-exclusions.json
+      - developer/bin/prepare_zap_pr.rb
+      - developer/test/prepare_zap_pr_test.rb
+  # Only the trusted default-branch workflow and scripts run, after a bot bump is merged.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: Homebrew/actions/setup-ruby@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          setup-homebrew: true
+          portable-ruby: true
+
+      - run: ruby developer/test/prepare_zap_pr_test.rb
+
+  zap-pr:
+    if: >
+      github.repository == 'Homebrew/homebrew-cask' &&
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.merged &&
+      github.event.pull_request.user.login == 'BrewTestBot' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
+      startsWith(github.event.pull_request.head.ref, 'bump-')
+    runs-on: macos-latest
+    concurrency:
+      group: zap-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          core: false
+          cask: false
+
+      - name: Check out default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Ruby
+        uses: Homebrew/actions/setup-ruby@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          portable-ruby: true
+
+      - name: Prepare zap proposal from CI annotations
+        id: prepare
+        run: ruby developer/bin/prepare_zap_pr.rb
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Check cask style
+        if: steps.prepare.outputs.changes == 'true'
+        env:
+          CASK_PATH: ${{ steps.prepare.outputs.cask-path }}
+        run: brew style --fix "$CASK_PATH"
+
+      - name: Configure Git user
+        if: steps.prepare.outputs.changes == 'true'
+        uses: Homebrew/actions/git-user-config@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          username: BrewTestBot
+
+      - name: Set up commit signing
+        if: steps.prepare.outputs.changes == 'true'
+        uses: Homebrew/actions/setup-commit-signing@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
+
+      - name: Commit zap proposal
+        if: steps.prepare.outputs.changes == 'true'
+        env:
+          BRANCH: ${{ steps.prepare.outputs.branch }}
+          CASK_PATH: ${{ steps.prepare.outputs.cask-path }}
+          CASK_TOKEN: ${{ steps.prepare.outputs.token }}
+        run: |
+          git switch --create "$BRANCH"
+          git add -- "$CASK_PATH"
+          git commit --message "$CASK_TOKEN: update zap stanza"
+
+      - name: Push zap proposal
+        if: steps.prepare.outputs.changes == 'true'
+        uses: Homebrew/actions/git-try-push@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          token: ${{ secrets.HOMEBREW_CASK_REPO_WORKFLOW_TOKEN }}
+          branch: ${{ steps.prepare.outputs.branch }}
+
+      - name: Create pull request
+        if: steps.prepare.outputs.changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_CASK_REPO_WORKFLOW_TOKEN }}
+          BRANCH: ${{ steps.prepare.outputs.branch }}
+          CASK_TOKEN: ${{ steps.prepare.outputs.token }}
+          PR_BODY_FILE: ${{ steps.prepare.outputs.body-file }}
+        run: |
+          gh pr create --head "$BRANCH" --title "$CASK_TOKEN: update zap stanza" --body-file "$PR_BODY_FILE"
