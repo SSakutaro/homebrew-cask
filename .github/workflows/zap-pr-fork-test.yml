@@ -23,7 +23,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       HOMEBREW_NO_AUTO_UPDATE: 1
-      SOURCE_RUN_ID: '39594802572'
+      SOURCE_RUN_ID: '39596835451'
     steps:
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
