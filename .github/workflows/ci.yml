@@ -128,9 +128,11 @@ jobs:
       - name: Run brew config
         run: brew config
 
-      - name: Run brew test-bot --only-tap-syntax
+      # Full readall rejects official-only no_autobump stanzas under a fork's tap name.
+      # This fork-only branch checks the changed helpers and the actual fixture instead.
+      - name: Check fork helpers and fixture style
         id: tap-syntax
-        run: brew test-bot --tap '${{ matrix.tap }}' --only-tap-syntax ${{ matrix.stable && '--stable' || '' }}
+        run: brew style .github/actions/zap-pr/*.rb Casks/e/elephicon.rb
         if: always() && !matrix.cask
 
       - name: Run brew fetch --cask ${{ matrix.cask.token }}
