@@ -23,7 +23,6 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       HOMEBREW_NO_AUTO_UPDATE: 1
-      SOURCE_RUN_ID: '39596835451'
     steps:
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
@@ -42,11 +41,19 @@ jobs:
       - name: Run regression tests
         run: ruby .github/actions/zap-pr/prepare_test.rb
 
+      - name: Find actual cask CI for this commit
+        id: source
+        run: ruby .github/actions/zap-pr/fork_test.rb select-run
+
       - name: Wait for actual cask CI
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run-id }}
         run: gh run watch "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 20
 
       - name: Test exclusions and prepare real CI proposal
         id: prepare
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run-id }}
         run: ruby .github/actions/zap-pr/fork_test.rb
 
       - name: Check cask style
@@ -85,4 +92,6 @@ jobs:
             | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Verify duplicate suppression against real PR
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run-id }}
         run: ruby .github/actions/zap-pr/fork_test.rb duplicate

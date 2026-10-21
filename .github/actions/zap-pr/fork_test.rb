@@ -7,6 +7,23 @@ repository = ENV.fetch("GITHUB_REPOSITORY")
 raise "This test only runs in the fork" if repository != "SSakutaro/homebrew-cask"
 raise "Unexpected test branch" if ENV.fetch("GITHUB_REF_NAME") != "ci-auto-zap-pr-test"
 
+if ARGV.first == "select-run"
+  # CI is dispatched separately on the same commit. Wait for that run to appear.
+  endpoint = "repos/#{repository}/actions/workflows/ci.yml/runs"
+  30.times do
+    pages = ZapPR.api("#{endpoint}?head_sha=#{ENV.fetch("GITHUB_SHA")}&event=workflow_dispatch&per_page=100")
+    runs = pages.flat_map { |page| page.fetch("workflow_runs") }
+    source_run = runs.max_by { |item| [item.fetch("run_number"), item.fetch("run_attempt")] }
+    if source_run
+      id = Integer(source_run.fetch("id"))
+      File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts "run-id=#{id}" }
+      exit
+    end
+    sleep 10
+  end
+  raise "No manually dispatched cask CI found for this test commit"
+end
+
 run_id = ENV.fetch("SOURCE_RUN_ID")
 run = ZapPR.api("repos/#{repository}/actions/runs/#{run_id}").first
 raise "Source CI did not succeed" if run["conclusion"] != "success"
