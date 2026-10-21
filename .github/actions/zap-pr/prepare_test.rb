@@ -1,5 +1,3 @@
-# Standalone tooling is not part of Homebrew's Sorbet typechecking.
-# rubocop:disable Sorbet/StrictSigil, Sorbet/TrueSigil
 # typed: false
 # frozen_string_literal: true
 
@@ -8,7 +6,7 @@
 
 require "tmpdir"
 require "fileutils"
-require_relative "../bin/prepare_zap_pr"
+require_relative "prepare"
 
 # No test gems are needed by the workflow or local contributors.
 module ZapPRTest
@@ -164,8 +162,24 @@ module ZapPRTest
     end
   end
 
+  def self.test_fork_repository
+    with_fixture do |_event, _responses, directory|
+      requested = []
+      ZapPR.define_singleton_method(:api) do |endpoint|
+        requested << endpoint
+        [[]]
+      end
+      result = ZapPR.proposal(path: FILE, reports: [ANNOTATION], repository: "SSakutaro/homebrew-cask",
+                              directory:, run_id: 456, source: "for a fork-only test")
+      assert result["changes"] == "true"
+      assert requested.all? { |endpoint| endpoint.start_with?("repos/SSakutaro/homebrew-cask/") }
+      assert requested.any? { |endpoint| endpoint.include?("head=SSakutaro%3Aauto-zap-example-") }
+      assert File.read(result["body-file"]).include?("for a fork-only test")
+    end
+  end
+
   def self.test_exclusions
-    ZapPR.exclusions(File.expand_path("../../.github/zap-pr-exclusions.json", __dir__))
+    ZapPR.exclusions(File.expand_path("../../zap-pr-exclusions.json", __dir__))
     with_fixture do |event, _responses, directory|
       File.write(".github/zap-pr-exclusions.json", JSON.generate("example" => "Shared files are intentional"))
       assert ZapPR.prepare(event, repository: "Homebrew/homebrew-cask", directory:).nil?
@@ -219,4 +233,4 @@ end
 
 ZapPRTest.run
 
-# rubocop:enable Sorbet/StrictSigil, Sorbet/TrueSigil, Homebrew/NegateInclude
+# rubocop:enable Homebrew/NegateInclude
