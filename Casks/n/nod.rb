@@ -24,10 +24,13 @@ cask "nod" do
 
   zap trash: [
     "~/.nod-desktop",
+    "~/Library/Application Scripts/group.com.apple.chronod",
     "~/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.ApplicationRecentDocuments/dev.nod.desktop.sfl*",
     "~/Library/Application Support/nod",
     "~/Library/Caches/dev.nod.desktop",
     "~/Library/Caches/dev.nod.desktop.ShipIt",
+    "~/Library/Group Containers/group.com.apple.chronod",
+    "~/Library/Preferences/com.apple.chronod.plist",
     "~/Library/Preferences/dev.nod.desktop.plist",
   ]
 end
