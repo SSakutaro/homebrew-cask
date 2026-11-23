@@ -83,6 +83,9 @@ jobs:
           fi
           git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 
+          # This workflow audits and installs the checked-out casks, including on forks.
+          brew trust homebrew/cask
+
       - name: Run brew config
         run: brew config
 
@@ -237,6 +240,9 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Trust the checked-out tap
+        run: brew trust homebrew/cask
 
       - name: Clean up CI machine
         if: runner.os == 'macOS' && !matrix.stable
