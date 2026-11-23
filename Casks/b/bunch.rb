@@ -8,7 +8,8 @@ cask "bunch" do
   homepage "https://bunchapp.co/"
 
   livecheck do
-    url "https://brettterpstra.com/updates/bunch/appcast.xml"
+    url "https://brettterpstra.com/updates/bunch/appcast.xml",
+        user_agent: :browser
     strategy :sparkle
   end
 
