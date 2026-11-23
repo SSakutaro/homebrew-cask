@@ -92,6 +92,9 @@ jobs:
           INPUT_CASKS: ${{ github.event.inputs.casks }}
           PULL_REQUEST_URL: ${{ github.event.pull_request.url }}
         run: |
+          # Match the homebrew/cask tap registered above, including on forks.
+          export GITHUB_REPOSITORY=Homebrew/homebrew-cask
+
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]
           then
             # shellcheck disable=SC2086 # $INPUT_CASKS is a space-separated list of cask tokens
